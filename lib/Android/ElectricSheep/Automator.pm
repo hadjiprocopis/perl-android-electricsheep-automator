@@ -1240,8 +1240,8 @@ sub list_physical_displays {
 	my @cmd = ('dumpsys', 'SurfaceFlinger', '--display-id');
 	if( $verbosity > 0 ){ $log->info("${whoami} (via $parent), line ".__LINE__." : sending command to adb: @cmd") }
 	my $res = $self->adb->shell(@cmd);
-	if( ! defined $res ){ $log->error(join(" ", @cmd)."\n${whoami} (via $parent), line ".__LINE__." : error, above shell command has failed, got undefined result, most likely shell command did not run at all, this should not be happening."); return 1 }
-	if( $res->[0] != 0 ){ $log->error(join(" ", @cmd)."\n${whoami} (via $parent), line ".__LINE__." : error, above shell command has failed, with:\nSTDOUT:\n".$res->[1]."\n\nSTDERR:\n".$res->[2]."\nEND."); return 1 }
+	if( ! defined $res ){ $log->error(join(" ", @cmd)."\n${whoami} (via $parent), line ".__LINE__." : error, above shell command has failed, got undefined result, most likely shell command did not run at all, this should not be happening."); return undef }
+	if( $res->[0] != 0 ){ $log->error(join(" ", @cmd)."\n${whoami} (via $parent), line ".__LINE__." : error, above shell command has failed, with:\nSTDOUT:\n".$res->[1]."\n\nSTDERR:\n".$res->[2]."\nEND."); return undef }
 	my $content = $res->[1];
 	my %ids;
 	while( $content =~ /^(Display\s+(.+?)\s+.+?)$/gsm ){
@@ -2055,7 +2055,7 @@ See L</WILL ANYTHING BE INSTALLED ON THE DEVICE?>.
 
 =head1 CONSTRUCTOR
 
-=head2 new($params)
+=head2 B<C<new($params)>>
 
 Creates a new C<Android::ElectricSheep::Automator> object. C<$params>
 is a hash reference used to pass initialization options which may
@@ -2067,8 +2067,8 @@ or should include the following:
 
 the configuration
 file holds
-configuration parameters and its format is "enhanced" JSON
-(see L<use Config::JSON::Enhanced>) which is basically JSON
+configuration parameters. Its format is "enhanced" JSON
+(see L<Config::JSON::Enhanced>) which is basically JSON
 which allows comments between C< E<lt>/* > and C< */E<gt> >.
 
 Here is an example configuration file to get you started:
@@ -2153,8 +2153,8 @@ Default value is 0.
 
 optionally specify a logger object
 to be used (instead of creating a fresh one). This object
-must implement C<info()>, C<warn()>, C<error()>. For
-example L<Mojo::Log>.
+must implement these methods: C<info()>, C<warn()>, C<error()>.
+L<Mojo::Log> fits perfectly.
 
 =item B<C<logfile>>
 
@@ -2191,16 +2191,15 @@ Functions return back objects, ARRAY_REF or HASH_REF.
 
 =back
 
-=over 1
 
-=item devices()
+=head2 B<C<devices()>>
 
 Lists all Android devices connected to your
 desktop and returns these as an ARRAY_REF which can be empty.
 
 It returns C<undef> on failure.
 
-=item connect_device($params)
+=head2 B<C<connect_device($params)>>
 
 Specifies the current Android device to control. Its use is
 required only if you have more than one devices connected.
@@ -2221,7 +2220,7 @@ object.
 
 It returns C<0> on success, C<1> on failure.
 
-=item dump_current_screen_ui($params)
+=head2 B<C<dump_current_screen_ui($params)>>
 
 It dumps the current screen as XML and returns that as
 a string, optionally saving it to the specified file.
@@ -2238,7 +2237,7 @@ optionally save the returned XML string to the specified file.
 
 It returns C<undef> on failure or the UI XML dump, as a string, on success.
 
-=item dump_current_screen_shot($params)
+=head2 B<C<dump_current_screen_shot($params)>>
 
 It dumps the current screen as a PNG image and returns that as
 a L<Image::PNG> object, optionally saving it to the specified file.
@@ -2255,7 +2254,7 @@ optionally save the returned XML string to the specified file.
 
 It returns C<undef> on failure or a L<Image::PNG> image, on success.
 
-=item dump_current_screen_video($params)
+=head2 B<C<dump_current_screen_video($params)>>
 
 It dumps the current screen as MP4 video and saves that
 in specified file.
@@ -2302,7 +2301,15 @@ or, from the CLI, by C<adb shell dumpsys SurfaceFlinger --display-id>
 
 C<adb shell screenrecord --help> contains some more documentation.
 
-=item list_running_processes($params)
+=head2 B<C<list_physical_displays()>>
+
+It lists the IDs of all the physical displays connected to the
+device, including the main one and returns these back as a HASH_REF
+keyed on display ID. It needs that connect_device() to have been called prior to this call
+
+It returns C<undef> on failure or the results as a HASH_REF keyed on display ID.
+
+=head2 B<C<list_running_processes($params)>>
 
 It finds the running processes on device (using a `ps`),
 optionally can save the (parsed) `ps`
@@ -2337,11 +2344,11 @@ of the `ps` output.
 
 =back
 
-=item pidof($params)
+=head2 B<C<pidof($params)>>
 
 It returns the PID of the specified command name.
 The specified command name must match the app or command
-name exactly. B<Use C<pgrep()> if you want to match command
+name exactly. B<Use L/pgrep()> if you want to match command
 names with a regular expression>.
 
 C<$params> is a HASH_REF which should contain:
@@ -2357,9 +2364,8 @@ e.g. C<audioserver> or an app name e.g. C<android.hardware.vibrator-service.exam
 
 It returns C<undef> on failure or the PID of the matched command on success.
 
-=back
 
-=item pgrep($params)
+=head2 B<C<pgrep($params)>>
 
 It returns the PIDs matching the specified command or app
 name (which can be an extended regular expression that C<pgrep>
@@ -2387,9 +2393,8 @@ a HASH_REF of data for each command matched (under keys C<pid> and C<command>).
 The returned ARRAY_REF can contain 0, 1 or more items depending
 on what was matched.
 
-=back
 
-=item geofix($params)
+=head2 B<C<geofix($params)>>
 
 It fixes the geolocation of the device to the specified coordinates.
 After this, app API calls to get current geolocation will result to this
@@ -2411,7 +2416,7 @@ the longitude of the position as a floating point number.
 
 It returns C<1> on failure or a C<0> on success.
 
-=item dump_current_location()
+=head2 B<C<dump_current_location()>>
 
 It finds the current GPS location of the device
 according to ALL the GPS providers available.
@@ -2444,12 +2449,12 @@ C< E<lt>na E<gt> > if the provider failed to return valid output.
 
 =back
 
-=item is_app_running($params)
+=head2 B<C<is_app_running($params)>>
 
 It checks if the specified app is running on the device.
 The name of the app must be exact.
 Note that you can search for running apps / commands
-with extended regular expressions using C<pgrep()>
+with extended regular expressions using L/pgrep()>
 
 C<$params> is a HASH_REF which should contain:
 
@@ -2459,16 +2464,14 @@ C<$params> is a HASH_REF which should contain:
 
 the name of the app to check if it is running.
 It must be its exact name. Basically it checks the
-output of C<pidof()>.
+output of L<pidof()>.
 
 =back
 
 It returns C<undef> on failure,
 C<1> if the app is running or C<0> if the app is not running.
 
-=back
-
-=item find_current_device_properties($params)
+=head2 B<C<find_current_device_properties($params)>>
 
 It enquires the device currently connected,
 and specified with L</connect_device($params)>, if needed,
@@ -2479,7 +2482,7 @@ resolution, serial number, etc.
 It returns L<Android::ElectricSheep::Automator::DeviceProperties>
 object on success or C<undef> on failure.
 
-=item connect_device()
+=head2 B<C<connect_device()>>
 
 It signals to our object that there is now
 a device connected to the desktop and its
@@ -2487,7 +2490,7 @@ enquiry and subsequent control can commence.
 If this is not called and neither C<device-is-connected =E<gt> 1>
 is specified as a parameter to the constructor, then
 the functionality will be limited and access
-to functions like C<swipe()>, C<open_app()>, etc.
+to functions like L</swipe($params)>, L</open_app($params)>, etc.
 will be blocked until the caller signals that
 a device is now connected to the desktop.
 
@@ -2504,27 +2507,27 @@ via C<$self-E<gt>>device_properties()>.
 
 It returns C<0> on success, C<1> on failure.
 
-=item disconnect_device()
+=head2 B<C<disconnect_device()>>
 
 Signals to our object that it should consider
 that there is currently no device connected to
 the desktop (irrespective of that is true or not)
-which will block access to L</swipe()>, L</open_app()>, etc.
+which will block access to L</swipe($params)>, L</open_app($params)>, etc.
 
-=item device_properties()
+=head2 B<C<device_properties()>>
 
 It returns the currently connected device properties
 as a L<Android::ElectricSheep::Automator::DeviceProperties>
 object or C<undef> if there is no connected device.
 The returned object is constructed during a call
-to L</find_current_device_properties()>
+to L</find_current_device_properties($params)>
 which is called via L</connect_device($params)> and will persist
 for the duration of the connection.
 However, after a call to L</disconnect_device()>
 this object will be discarded and C<undef> will be
 returned.
 
-=item swipe($params)
+=head2 B<C<swipe($params)>>
 
 Emulates a "swipe" in four directions.
 Sets the current Android device to control. It is only
@@ -2560,7 +2563,7 @@ the next screen.
 
 It returns C<0> on success, C<1> on failure.
 
-=item tap($params)
+=head2 B<C<tap($params)>>
 
 Emulates a "tap" at the specified location.
 C<$params> is a HASH_REF which must contain one
@@ -2580,14 +2583,14 @@ of the widget to tap. Which contains two ARRAY_REFs
 for the top-left and bottom-right coordinates, e.g.
 C< [ [tlX,tlY], [brX,brY] ] >. This is convenient
 when the widget is extracted from an XML dump of
-the UI (see L</dump_current_screen_ui()>) which
+the UI (see L</dump_current_screen_ui($params)>) which
 contains exactly this bounding rectangle.
 
 =back
 
 It returns C<0> on success, C<1> on failure.
 
-=item input_text($params)
+=head2 B<C<input_text($params)>>
 
 It "C<types>" the specified text into the specified position,
 where a text-input widget is expected to exist.
@@ -2595,9 +2598,9 @@ At first it taps at the widget's
 location in order to get the focus. And then it enters
 the text. You need to find the position of the desired
 text-input widget by first getting the current screen UI
-(using L<dump_current_screen_ui>) and then using an XPath
+(using L</dump_current_screen_ui($params)>) and then using an XPath
 selector to identify the desired widget by name/id/attributes.
-See the source code of method C<send_message()> in file
+See the source code of method L</send_message()> in file
 C<lib/Android/ElectricSheep/Automator/Plugins/Apps/Viber.pm>
 for how this is done for the message-sending text-input widget
 of the Viber app.
@@ -2630,14 +2633,14 @@ the text input. Which contains two ARRAY_REFs
 for the top-left and bottom-right coordinates, e.g.
 C< [ [tlX,tlY], [brX,brY] ] >. This is convenient
 when the widget is extracted from an XML dump of
-the UI (see L</dump_current_screen_ui()>) which
+the UI (see L</dump_current_screen_ui($params)>) which
 contains exactly this bounding rectangle.
 
 =back
 
 It returns C<0> on success, C<1> on failure.
 
-=item clear_input_field($params)
+=head2 B<C<clear_input_field($params)>>
 
 It clears the contents of a text-input widget
 at specified location.
@@ -2654,7 +2657,7 @@ specifiers C<position> or C<bounds>:
 
 =over 4
 
-=item B<C<position>>
+=item <B<C<position>>
 
 should be an ARRAY_REF
 as the C<X,Y> coordinates of the point to "tap" in order
@@ -2669,7 +2672,7 @@ the text input. Which contains two ARRAY_REFs
 for the top-left and bottom-right coordinates, e.g.
 C< [ [tlX,tlY], [brX,brY] ] >. This is convenient
 when the widget is extracted from an XML dump of
-the UI (see L</dump_current_screen_ui()>) which
+the UI (see L</dump_current_screen_ui($params)>) which
 contains exactly this bounding rectangle.
 
 =item B<C<num-characters>>
@@ -2682,56 +2685,56 @@ the text-edit widget then enter this here.
 
 It returns C<0> on success, C<1> on failure.
 
-=item home_screen()
+=head2 B<C<home_screen()>>
 
 Go to the "home" screen.
 
 It returns C<0> on success, C<1> on failure.
 
 
-=item wake_up()
+=head2 B<C<wake_up()>>
 
 "Wake" up the device.
 
 It returns C<0> on success, C<1> on failure.
 
 
-=item next_screen()
+=head2 B<C<next_screen()>>
 
 Swipe to the next screen (on the right).
 
 It returns C<0> on success, C<1> on failure.
 
 
-=item previous_screen()
+=head2 B<C<previous_screen()>>
 
 Swipe to the previous screen (on the left).
 
 It returns C<0> on success, C<1> on failure.
 
 
-=item navigation_menu_back_button()
+=head2 B<C<navigation_menu_back_button()>>
 
 Press the "back" button which is the triangular
 button at the left of the navigation menu at the bottom.
 
 It returns C<0> on success, C<1> on failure.
 
-=item navigation_menu_home_button()
+=head2 B<C<navigation_menu_home_button()>>
 
 Press the "home" button which is the circular
 button in the middle of the navigation menu at the bottom.
 
 It returns C<0> on success, C<1> on failure.
 
-=item navigation_menu_overview_button()
+=head2 B<C<navigation_menu_overview_button()>>
 
 Press the "overview" button which is the square
 button at the right of the navigation menu at the bottom.
 
 It returns C<0> on success, C<1> on failure.
 
-=item apps()
+=head2 B<C<apps()>>
 
 It returns a HASH_REF containing all the
 packages (apps) installed on the device
@@ -2739,15 +2742,16 @@ keyed on package name (which is like C<com.android.settings>.
 The list of installed apps is populated either
 if C<device-is-connected> is set to 1 during construction
 or a call has been made to any of these
-methods: C<open_app()>, C<close_app()>,
-C<search_app()>, C<find_installed_apps()>.
+methods: L</open_app($params)>, L</close_app($params)>,
+L</search_app($params)>, L</find_installed_apps($params)>.
 
-=item find_installed_apps($params)
+=head2 B<C<find_installed_apps($params)>>
 
 It enquires the device about all the installed
 packages (apps) it has for the purpose of
-opening and closing apps with C<open_app()> and C<close_app()>.
-This list is available using C<$self->apps>.
+opening and closing apps with L</open_app($params)> and L</close_app($params)>.
+This list is available using C<$self->apps> (where C<$self>
+is a L<Android::ElectricSheep::Automator> object.
 
 Finding the package names is done in a single
 operation and does
@@ -2755,7 +2759,7 @@ not take long. But enquiring with the connected device
 about the main activity/ies
 of each package takes some time as there should be
 one enquiry for each package. By default,
-C<find_installed_apps()> will find all the package names
+L</find_installed_apps($params)> will find all the package names
 but will not enquire each package (fast).
 This enquiry will be
 done lazily if and when you need to open or close that
@@ -2803,7 +2807,7 @@ obtained (e.g. when C<lazy> is set to 1).
 It also sets the exact same data to be available
 via C<$self->apps>.
 
-=item search_app($params)
+=head2 B<C<search_app($params)>>
 
 It searches the list of installed packages (apps)
 on the current device and returns the match(es)
@@ -2811,7 +2815,7 @@ as a HASH_REF keyed on package name which may
 have as values L<Android::ElectricSheep::Automator::AppProperties>
 objects with packages information. If there are
 no entries yet in the list of installed packages,
-it calls the C<find_installed_apps()> first to populate it.
+it calls the L</find_installed_apps($params)> first to populate it.
 
 C<$params> is a HASH_REF which may or should contain:
 
@@ -2826,7 +2830,7 @@ created by e.g. C<qr/^\.com.+?\.settings$/i>.
 
 =item B<C<lazy>>
 
-is a flag to be passed on to L</find_installed_apps()>,
+is a flag to be passed on to L</find_installed_apps($params)>,
 if needed, to denote whether to enquire
 information about each package (app) at the time of this
 call (set it to C<1>) or lazily, on a if-and-when-needed basis
@@ -2835,7 +2839,7 @@ all packages except those specified in C<packages>, if any. Default is C<1>.
 
 =item B<C<force-reload-apps-list'>>
 
-is a flag to be passed on to L</find_installed_apps()>,
+is a flag to be passed on to L</find_installed_apps($params)>,
 if needed, and can be set to 1 to
 erase previous packages information and start fresh. Default is C<0>.
 
@@ -2846,12 +2850,12 @@ with enquired information (as a L<Android::ElectricSheep::Automator::AppProperti
 object) or C<undef> if this information was not
 obtained (e.g. when C<lazy> is set to 1).
 
-=item open_app($params)
+=head2 B<C<open_app($params)>>
 
 It opens the package specified in C<$params>
 on the current device. If there are
 no entries yet in the list of installed packages,
-it calls the C<find_installed_apps()> first to populate it.
+it calls the L</find_installed_apps($params)> first to populate it.
 It will refuse to open multiple apps matched perhaps
 by a regular expression in the package specification.
 
@@ -2870,16 +2874,16 @@ exactly one match.
 
 =item B<C<lazy>>
 
-is a flag to be passed on to L</find_installed_apps()>,
+is a flag to be passed on to L</find_installed_apps($params)>,
 if needed, to denote whether to enquire
 information about each package (app) at the time of this
 call (set it to C<1>) or lazily, on a if-and-when-needed basis
 (set it to C<0> which is the default). C<lazy> affects
 all packages except those specified in C<packages>, if any. Default is C<1>.
 
-=item B<C<force-reload-apps-list'>>
+=item B<C<force-reload-apps-list>>
 
-is a flag to be passed on to L</find_installed_apps()>,
+is a flag to be passed on to L</find_installed_apps($params)>,
 if needed, and can be set to 1 to
 erase previous packages information and start fresh. Default is C<0>.
 
@@ -2887,16 +2891,16 @@ erase previous packages information and start fresh. Default is C<0>.
 
 It returns a HASH_REF of matched packages names (keys) along
 with enquired information (as a L<Android::ElectricSheep::Automator::AppProperties>
-object). At the moment, because C<open_app()> allows opening only a single app,
+object). At the moment, because L</open_app($params)> allows opening only a single app,
 this hash will contain only one entry unless we allow opening multiple
 apps (e.g. via a regex which it is already supported) in the future.
 
-=item close_app($params)
+=head2 B<C<close_app($params)>>
 
 It closes the package specified in C<$params>
 on the current device. If there are
 no entries yet in the list of installed packages,
-it calls the C<find_installed_apps()> first to populate it.
+it calls the L</find_installed_apps($params)> first to populate it.
 It will refuse to close multiple apps matched perhaps
 by a regular expression in the package specification.
 
@@ -2915,16 +2919,16 @@ exactly one match.
 
 =item B<C<lazy>>
 
-is a flag to be passed on to L</find_installed_apps()>,
+is a flag to be passed on to L</find_installed_apps($params)>,
 if needed, to denote whether to enquire
 information about each package (app) at the time of this
 call (set it to C<1>) or lazily, on a if-and-when-needed basis
 (set it to C<0> which is the default). C<lazy> affects
 all packages except those specified in C<packages>, if any. Default is C<1>.
 
-=item B<C<force-reload-apps-list'>>
+=item B<C<force-reload-apps-list>>
 
-is a flag to be passed on to L</find_installed_apps()>,
+is a flag to be passed on to L</find_installed_apps($params)>,
 if needed, and can be set to 1 to
 erase previous packages information and start fresh. Default is C<0>.
 
@@ -2932,19 +2936,16 @@ erase previous packages information and start fresh. Default is C<0>.
 
 It returns a HASH_REF of matched packages names (keys) along
 with enquired information (as a L<Android::ElectricSheep::Automator::AppProperties>
-object). At the moment, because C<close_app()> allows closing only a single app,
+object). At the moment, because L</close_app($params)> allows closing only a single app,
 this hash will contain only one entry unless we allow closing multiple
 apps (e.g. via a regex which it is already supported) in the future.
 
-=back
 
 =head1 SCRIPTS
 
 For convenience, a few simple scripts are provided:
 
-=over 2
-
-=item B<C<script/electric-sheep-find-installed-apps.pl>>
+=head2 B<C<script/electric-sheep-find-installed-apps.pl>>
 
 Find all install packages in the connected device. E.g.
 
@@ -2953,7 +2954,7 @@ C<< script/electric-sheep-find-installed-apps.pl --configfile config/myapp.conf 
 C<< script/electric-sheep-find-installed-apps.pl --configfile config/myapp.conf --device Pixel_2_API_30_x86_ --output myapps.json --fast >>
 
 
-=item B<C<script/electric-sheep-open-app.pl>>
+=head2 B<C<script/electric-sheep-open-app.pl>>
 
 Open an app by its exact name or a keyword matching it (uniquely):
 
@@ -2963,7 +2964,7 @@ C<< script/electric-sheep-open-app.pl --configfile config/myapp.conf --keyword '
 
 Note that it constructs a regular expression from escaped user input.
 
-=item B<C<script/electric-sheep-close-app.pl>>
+=head2 B<C<script/electric-sheep-close-app.pl>>
 
 Close an app by its exact name or a keyword matching it (uniquely):
 
@@ -2973,7 +2974,7 @@ C<< script/electric-sheep-close-app.pl --configfile config/myapp.conf --keyword 
 
 Note that it constructs a regular expression from escaped user input.
 
-=item B<C<script/electric-sheep-dump-ui.pl>>
+=head2 B<C<script/electric-sheep-dump-ui.pl>>
 
 Dump the current screen UI as XML to STDOUT or to a file:
 
@@ -2981,42 +2982,41 @@ C<< script/electric-sheep-dump-ui.pl --configfile config/myapp.conf --output ui.
 
 Note that it constructs a regular expression from escaped user input.
 
-=item B<C<script/electric-sheep-dump-current-location.pl>>
+=head2 B<C<script/electric-sheep-dump-current-location.pl>>
 
 Dump the GPS / geo-location position for the device from its various providers, if enabled.
 
 C<< script/electric-sheep-dump-current-location.pl --configfile config/myapp.conf --output geolocation.json >>
 
-=item B<C<script/electric-sheep-emulator-geofix.pl>>
+=head2 B<C<script/electric-sheep-emulator-geofix.pl>>
 
 Set the GPS / geo-location position to the specified coordinates.
 
 C<< script/electric-sheep-dump-ui.pl --configfile config/myapp.conf --latitude 12.3 --longitude 45.6 >>
 
-=item B<C<script/electric-sheep-dump-screen-shot.pl>>
+=head2 B<C<script/electric-sheep-dump-screen-shot.pl>>
 
 Take a screenshot of the device (current screen) and save to a PNG file.
 
 C<< script/electric-sheep-dump-screen-shot.pl --configfile config/myapp.conf --output screenshot.png >>
 
-=item B<C<script/electric-sheep-dump-screen-video.pl>>
+=head2 B<C<script/electric-sheep-dump-screen-video.pl>>
 
 Record a video of the device's current screen and save to an MP4 file.
 
 C<< script/electric-sheep-dump-screen-video.pl --configfile config/myapp.conf --output video.mp4 --time-limit 30 >>
 
-=item B<C<script/electric-sheep-viber-send-message.pl>>
+=head2 B<C<script/electric-sheep-viber-send-message.pl>>
 
 Send a message using the Viber app.
 
-C<< script/electric-sheep-viber-send-message.pl --message 'hello%sthere' --recipient 'george' --configfile config/myapp.conf --device Pixel_2_API_30_x86_>>
+C<< script/electric-sheep-viber-send-message.pl --message 'hello%sthere' --recipient 'george' --configfile config/myapp.conf --device Pixel_2_API_30_x86_ >>
 
 This one saves a lot of debugging information to C<debug> which can be used to
 deal with special cases or different versions of Viber:
 
-C<< script/electric-sheep-viber-send-message.pl --outbase debug --verbosity 1 --message 'hello%sthere' --recipient 'george' --configfile config/myapp.conf --device Pixel_2_API_30_x86_>>
+C<< script/electric-sheep-viber-send-message.pl --outbase debug --verbosity 1 --message 'hello%sthere' --recipient 'george' --configfile config/myapp.conf --device Pixel_2_API_30_x86_ >>
 
-=back
 
 =head1 TESTING
 
@@ -3210,6 +3210,14 @@ List all available devices you have created already: C<avdmanager list avd>
 Create virtual device: C<avdmanager create avd -d "Nexus 6" -n myavd -k "system-images;android-29;google_apis;x86">
 
 See L<https://stackoverflow.com/a/77599934>
+
+=head1 NO ACCESS TO GOOGLE PLAY?
+
+See here if your Android Emulator has no access to Google's App Store:
+
+L<https://stackoverflow.com/questions/71815181/how-can-i-get-google-play-to-work-on-android-emulator-in-android-studio-bumblebe>
+
+Your mileage will lean on the low side.
 
 =head1 USING YOUR REAL SMARTPHONE
 
